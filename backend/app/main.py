@@ -26,25 +26,65 @@ import time
 
 load_dotenv()
 
-app = FastAPI(title = "Website Cloning API")
+app = FastAPI(title = "Website Cloning API") #creates web server
 
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"],)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"],) #allows for frontend/backend data sharing
 
-
+#data shared should be a url
 class CloneRequest(BaseModel):
     url:str
 
+#data recieved should be html text
 class CloneResponse(BaseModel):
     cloned_html: str
-    success: bool
+    success: bool #indicating success
 
-anthropic_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-
-
-
+#connects to Claude
+anthropic_client = anthropic.Anthropic(api_key=os.getenv("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"))
 
 
+###WEBSCRAPING###
+def setup_selenium_driver(): #function that sets up chrome driver 
+    chrome_options = Options()
+    chrome_options.add_argument("--headless") #dont show window
+    chrome_options.add_argument("--no-sandbox") #remove security restriction to make it easier to run in server
+    chrome_options.add_argument("--disable-dev-shm-usage") #prevents memory issues
+    chrome_options.add_argument("--window-size=1920,1080") #sets browser window size (avoids problem of different window screen sizes)
+    
+    return webdriver.Chrome(options=chrome_options) #returns new chrome browser
 
+def scrape_website_data(url: str) -> dict: #main function for scraping!!! returns a dictionary
+    driver = setup_selenium_driver() #calls chrome driver from previous function
+    try: #first, attempt to visit the url website
+        driver.get(url)
+        time.sleep(3) #gives time to let website fully load
+
+        # Take screenshot
+        screenshot_path = tempfile.mktemp(suffix='.png')
+        driver.save_screenshot(screenshot_path)
+
+        # Read screenshot as base64
+        with open(screenshot_path, 'rb') as f:
+            screenshot_base64 = base64.b64encode(f.read()).decode()
+
+        page_source = driver.page_source
+        soup = BeautifulSoup(page_source, 'html.parser')
+        
+        # Extract useful information
+        return {
+            'screenshot_base64': screenshot_base64,
+            'title': soup.title.string if soup.title else 'No title',
+            'html_structure': str(soup.prettify())[:5000],  # Limit size
+            'text_content': soup.get_text()[:2000],  # Limit size
+            'links': [a.get('href') for a in soup.find_all('a', href=True)][:10],
+            'images': [img.get('src') for img in soup.find_all('img', src=True)][:10],
+        }
+        
+    finally:
+        driver.quit()
+        # Clean up screenshot file
+        if os.path.exists(screenshot_path):
+            os.remove(screenshot_path)
 
 
 
