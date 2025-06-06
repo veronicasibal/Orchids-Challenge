@@ -40,7 +40,7 @@ class CloneResponse(BaseModel):
     success: bool #indicating success
 
 #connects to Claude
-anthropic_client = anthropic.Anthropic(api_key=os.getenv("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"))
+anthropic_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC API KEY"))
 
 
 ###WEBSCRAPING###
