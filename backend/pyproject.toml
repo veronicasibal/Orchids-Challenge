@@ -1,9 +1,14 @@
 [project]
 name = "backend"
 version = "0.1.0"
-description = "Add your description here"
+description = "Website Cloning Backend"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard]>=0.115.12",
+    "requests>=2.31.0",
+    "beautifulsoup4>=4.12.0",
+    "selenium>=4.15.0",
+    "anthropic>=0.7.0",
+    "python-dotenv>=1.0.0",
 ]
